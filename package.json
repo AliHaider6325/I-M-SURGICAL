@@ -1,0 +1,42 @@
+{
+  "name": "imsurgical",
+  "version": "1.0.0",
+  "description": "",
+  "main": "server.js",
+  "type": "module",
+  "scripts": {
+    "start": "node server.js",
+    "server": "nodemon server.js",
+    "client": "npm run dev --prefix client/imsurgical",
+    "dev": "concurrently \"npm run server\" \"npm run client\""
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/AliHaider6325/I-M-SURGICAL.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/AliHaider6325/I-M-SURGICAL/issues"
+  },
+  "homepage": "https://github.com/AliHaider6325/I-M-SURGICAL#readme",
+  "dependencies": {
+    "bcryptjs": "^3.0.2",
+    "cloudinary": "^1.41.3",
+    "cors": "^2.8.5",
+    "dotenv": "^17.2.3",
+    "express": "^5.1.0",
+    "jsonwebtoken": "^9.0.2",
+    "lucide-react": "^0.545.0",
+    "mongoose": "^8.19.1",
+    "multer": "^2.0.2",
+    "multer-storage-cloudinary": "^4.0.0",
+    "nodemon": "^3.1.10",
+    "react-icons": "^5.5.0",
+    "react-router-dom": "^7.9.4"
+  },
+  "devDependencies": {
+    "concurrently": "^9.2.1"
+  }
+}

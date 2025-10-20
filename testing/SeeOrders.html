@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>All Orders</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      background: #f9f9f9;
+      margin: 0;
+      padding: 20px;
+    }
+
+    h1 {
+      text-align: center;
+      color: #333;
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      background: #fff;
+      box-shadow: 0 2px 6px rgba(0, 0, 0, 0.1);
+      border-radius: 8px;
+      overflow: hidden;
+    }
+
+    th, td {
+      padding: 12px 15px;
+      border-bottom: 1px solid #ddd;
+      text-align: left;
+    }
+
+    th {
+      background: #007bff;
+      color: white;
+    }
+
+    tr:hover {
+      background: #f1f1f1;
+    }
+
+    .items {
+      font-size: 0.9em;
+      color: #555;
+    }
+
+    button {
+      padding: 6px 12px;
+      border: none;
+      border-radius: 5px;
+      cursor: pointer;
+      color: white;
+    }
+
+    .delete-btn {
+      background: #dc3545;
+    }
+
+    .delete-btn:hover {
+      background: #b52b36;
+    }
+  </style>
+</head>
+<body>
+  <h1>📦 All Orders</h1>
+  <table id="orders-table">
+    <thead>
+      <tr>
+        <th>Customer</th>
+        <th>Email</th>
+        <th>Address</th>
+        <th>Delivery</th>
+        <th>Items</th>
+        <th>Total</th>
+        <th>Date</th>
+        <th>Actions</th>
+      </tr>
+    </thead>
+    <tbody id="orders-body">
+      <tr><td colspan="8" style="text-align:center;">Loading...</td></tr>
+    </tbody>
+  </table>
+
+  <script>
+  async function fetchWithAuth(url, options = {}) {
+    const token = localStorage.getItem("token");
+    if (!token) {
+      alert("Unauthorized! Please log in first.");
+      window.location.href = "login.html";
+      return null;
+    }
+
+    const res = await fetch(url, {
+      ...options,
+      headers: {
+        "Content-Type": "application/json",
+        Authorization: `Bearer ${token}`,
+        ...(options.headers || {}),
+      },
+    });
+
+    // If token expired or invalid
+    if (res.status === 401) {
+      alert("Session expired! Please log in again.");
+      localStorage.removeItem("token");
+      window.location.href = "login.html";
+      return null;
+    }
+
+    return res;
+  }
+
+  async function loadOrders() {
+    try {
+      const res = await fetchWithAuth("http://localhost:5000/api/orders");
+      if (!res) return; // already handled (token expired or no token)
+
+      const data = await res.json();
+      const tbody = document.getElementById("orders-body");
+      tbody.innerHTML = "";
+
+      if (!data.orders || data.orders.length === 0) {
+        tbody.innerHTML =
+          "<tr><td colspan='8' style='text-align:center;'>No orders found</td></tr>";
+        return;
+      }
+
+      data.orders.forEach((order) => {
+        const tr = document.createElement("tr");
+        tr.dataset.id = order._id;
+
+        tr.innerHTML = `
+          <td>${order.customerName || "N/A"}</td>
+          <td>${order.email || "N/A"}</td>
+          <td>${order.address?.street || ""}, ${order.address?.city || ""}</td>
+          <td>${order.deliveryMethod || "-"}</td>
+          <td class="items">
+            ${
+              order.items
+                ?.map((i) => `${i.productName} (${i.quantity} × ${i.price})`)
+                .join("<br>") || ""
+            }
+          </td>
+          <td>Rs. ${order.totalAmount || 0}</td>
+          <td>${new Date(order.createdAt).toLocaleString()}</td>
+          <td><button class="delete-btn" onclick="deleteOrder('${order._id}', this)">Delete</button></td>
+        `;
+        tbody.appendChild(tr);
+      });
+    } catch (err) {
+      console.error("❌ Failed to load orders:", err);
+      document.getElementById("orders-body").innerHTML =
+        "<tr><td colspan='8' style='text-align:center;color:red;'>Failed to load orders</td></tr>";
+    }
+  }
+
+  async function deleteOrder(id, btn) {
+    const confirmDelete = confirm("Are you sure you want to delete this order?");
+    if (!confirmDelete) return;
+
+    try {
+      const res = await fetchWithAuth(`http://localhost:5000/api/orders/${id}`, {
+        method: "DELETE",
+      });
+      if (!res) return; // token expired handled
+
+      const data = await res.json();
+      if (data.success) {
+        btn.closest("tr").remove();
+        alert("✅ Order deleted successfully.");
+      } else {
+        alert("❌ Failed to delete order: " + (data.message || "Unknown error"));
+      }
+    } catch (err) {
+      console.error("❌ Delete error:", err);
+      alert("Failed to delete order. Check console.");
+    }
+  }
+
+  loadOrders();
+</script>
+
+</body>
+</html>
